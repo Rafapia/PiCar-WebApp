@@ -4,11 +4,8 @@ document.onkeyup = resetKey;
 var server_port = 65432;
 var server_addr = "192.168.10.140";   // the IP address of your Raspberry PI
 
-function client(){
-    
+function client(input = ""){
     const net = require('net');
-    var input = document.getElementById("message").value;
-
     const client = net.createConnection({ port: server_port, host: server_addr }, () => {
         // 'connect' listener.
         console.log('connected to server!');
@@ -18,8 +15,14 @@ function client(){
     
     // get the data from the server
     client.on('data', (data) => {
-        document.getElementById("bluetooth").innerHTML = data;
-        console.log(data.toString());
+        const json_data = JSON.parse(data);
+        document.getElementById("movement").innerHTML = json_data.movement;
+        document.getElementById("speed").innerHTML = json_data.curr_speed;
+        document.getElementById("temperature").innerHTML = json_data.cpu_temp;
+        document.getElementById("grayscale").innerHTML = json_data.grayscale;
+
+        // document.getElementById("bluetooth").innerHTML = data;
+        console.log(json_data.toString());
         client.end();
         client.destroy();
     });
@@ -39,22 +42,22 @@ function updateKey(e) {
     if (e.keyCode == '87') {
         // up (w)
         document.getElementById("upArrow").style.color = "green";
-        send_data("87");
+        client("forward");
     }
     else if (e.keyCode == '83') {
         // down (s)
         document.getElementById("downArrow").style.color = "green";
-        send_data("83");
+        client("backward");
     }
     else if (e.keyCode == '65') {
         // left (a)
         document.getElementById("leftArrow").style.color = "green";
-        send_data("65");
+        client("left");
     }
     else if (e.keyCode == '68') {
         // right (d)
         document.getElementById("rightArrow").style.color = "green";
-        send_data("68");
+        client("right");
     }
 }
 
@@ -67,11 +70,12 @@ function resetKey(e) {
     document.getElementById("downArrow").style.color = "grey";
     document.getElementById("leftArrow").style.color = "grey";
     document.getElementById("rightArrow").style.color = "grey";
+    client("stop")
 }
 
 
 // update data for every 50ms
-function update_data(){
+function update_data() {
     setInterval(function(){
         // get image from python server
         client();
